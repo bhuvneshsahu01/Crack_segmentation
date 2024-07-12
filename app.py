@@ -19,7 +19,7 @@ main_title_cfg = """<div><h1 style="color:#FF64DA; text-align:center; font-size:
 #                 </div>"""
 
 # Set html page configuration
-st.set_page_config(page_title="Ultralytics Streamlit App", layout="wide", initial_sidebar_state="auto")
+st.set_page_config(page_title="Crack Detection App", layout="wide", initial_sidebar_state="auto")
 
 # Append the custom HTML
 st.markdown(menu_style_cfg, unsafe_allow_html=True)
@@ -27,7 +27,7 @@ st.markdown(main_title_cfg, unsafe_allow_html=True)
 
 # Add ultralytics logo in sidebar
 with st.sidebar:
-    logo = "https://raw.githubusercontent.com/ultralytics/assets/main/logo/Ultralytics_Logotype_Original.svg"
+    logo = "https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.cmi.ac.in%2F&psig=AOvVaw3qho9Wsgy26HLYpbNFZUif&ust=1720877908666000&source=images&cd=vfe&opi=89978449&ved=0CBEQjRxqFwoTCJDHp_fPoYcDFQAAAAAdAAAAABAE"
     st.image(logo, width=250)
 
 # Add elements to vertical setting menu
@@ -89,8 +89,6 @@ if st.sidebar.button("Start"):
 
                 videocapture = cv2.VideoCapture(vid_file_name)  # Capture the video
 
-                if not videocapture.isOpened():
-                    st.error("Could not open webcam.")
                 success, frame = videocapture.read()
                 stop_button = st.button("Stop")  # Button to stop the inference
 
@@ -104,14 +102,11 @@ if st.sidebar.button("Start"):
                     results = model(frame, conf=conf_thres, iou=nms_thres)
                     # Store model predictions
                     for result in results:
-                        masks = result.masks  # Masks object for segmentation masks outputs
-
-                        # Plot the results on the original image and get the image with annotations
-                        annotated_image = result.plot()
+                        masks = result.masks  # Masks object for segmentation masks out
 
                         # Display the image with annotations
-                        org_frame.image(frame, channels="BGR")
-                        ann_frame.image(annotated_image, channels="BGR")
+                        org_frame.image(frame)
+                        ann_frame.image(result.plot())
 
                     if stop_button:
                         videocapture.release()  # Release the capture
