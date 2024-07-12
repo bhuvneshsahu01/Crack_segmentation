@@ -27,9 +27,7 @@ st.markdown(main_title_cfg, unsafe_allow_html=True)
 
 # Add ultralytics logo in sidebar
 with st.sidebar:
-    logo = "https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.cmi.ac.in%2F&psig=AOvVaw3qho9Wsgy26HLYpbNFZUif&ust=1720877908666000&source=images&cd=vfe&opi=89978449&ved=0CBEQjRxqFwoTCJDHp_fPoYcDFQAAAAAdAAAAABAE"
-    st.image(logo, width=250)
-
+    logo = "https://raw.githubusercontent.com/ultralytics/assets/main/logo/Ultralytics_Logotype_Original.svg"
 # Add elements to vertical setting menu
 st.sidebar.title("User Configuration")
 
@@ -95,7 +93,8 @@ if st.sidebar.button("Start"):
                 prev_time = 0
                 while success:
                     success, frame = videocapture.read()
-
+                    if not success:
+                      break
                     curr_time = time.time()
                     fps = 1 / (curr_time - prev_time)
                     prev_time = curr_time
@@ -112,6 +111,7 @@ if st.sidebar.button("Start"):
                         videocapture.release()  # Release the capture
                     # Display FPS in sidebar
                     fps_display.metric("FPS", f"{fps:.2f}")
+                  
 
                 # Release the capture
                 videocapture.release()
