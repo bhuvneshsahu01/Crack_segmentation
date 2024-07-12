@@ -165,6 +165,5 @@ if st.sidebar.button("Start"):
                 org_frame.image(img_file, channels="BGR")
                 ann_frame.image(segmented_image, channels="BGR")
 
-    os.remove(img_file_name)
 
 
