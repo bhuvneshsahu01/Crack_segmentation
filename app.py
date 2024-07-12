@@ -1,7 +1,6 @@
 import io
 import cv2
 import streamlit as st
-import os
 from ultralytics import YOLO
 import time
 # Hide main menu style
@@ -116,7 +115,6 @@ if st.sidebar.button("Start"):
 
                     if stop_button:
                         videocapture.release()  # Release the capture
-                        os.remove(vid_file_name)
                     # Display FPS in sidebar
                     fps_display.metric("FPS", f"{fps:.2f}")
 
