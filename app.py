@@ -1,8 +1,8 @@
 import io
 import cv2
 import streamlit as st
-from ultralytics import YOLO
 import time
+from ultralytics import YOLO
 # Hide main menu style
 menu_style_cfg = """<style>MainMenu {visibility: hidden;}</style>"""
 
@@ -61,7 +61,8 @@ if source == 'image':
 model = st.sidebar.selectbox(
     "Model",
     (
-        "YOLOv8",
+        "YOLOv8 s",
+        "YOLOv8 n",
         "Detectron2",
          "SAM"
     ),
@@ -73,18 +74,24 @@ bbox = st.sidebar.selectbox(
         "No"
     ),
 )
-model = YOLO("best.pt")  # Load the yolov8 model
-
-conf_thres = st.sidebar.slider("Confidence Threshold",0.0, 1.0, 0.25, 0.01)
-nms_thres = st.sidebar.slider("NMS Threshold", 0.0, 1.0, 0.45, 0.01)
 
 col1, col2 = st.columns(2)
 org_frame = col1.empty()
 ann_frame = col2.empty()
 
+yolo = YOLO("best n.pt")
+conf_thres = st.sidebar.slider("Confidence Threshold",0.0, 1.0, 0.25, 0.01)
+nms_thres = st.sidebar.slider("NMS Threshold", 0.0, 1.0, 0.45, 0.01)
+
+
+
 if st.sidebar.button("Start"):
 
     if source == "video":
+
+
+                if model == 'YOLOv8 s':
+                    yolo = YOLO("best s.pt")
                 fps_display = st.sidebar.empty()  # Placeholder for FPS display
 
                 videocapture = cv2.VideoCapture(vid_file_name)  # Capture the video
@@ -103,17 +110,48 @@ if st.sidebar.button("Start"):
                     curr_time = time.time()
                     fps = 1 / (curr_time - prev_time)
                     prev_time = curr_time
-                    results = model(frame, conf=conf_thres, iou=nms_thres)
+                    results = yolo(frame, conf=conf_thres, iou=nms_thres)
                     # Store model predictions
-                    for result in results:
-                        masks = result.masks  # Masks object for segmentation masks outputs
+                    if bbox=='Yes':
+                        for result in results:
+                            masks = result.masks  # Masks object for segmentation masks outputs
 
-                        # Plot the results on the original image and get the image with annotations
-                        annotated_image = result.plot()
+                            # Plot the results on the original image and get the image with annotations
+                            annotated_image = result.plot()
+                    else:
+                        for result in results:
+                            # Extract masks and the original image
+                            if not result.masks:
+                                st.write("No masks detected at this confidence level")
+                                segmented_image = img_file
+                                org_frame.image(img_file, channels="BGR")
+                                ann_frame.image(segmented_image, channels="BGR")
+                                break
+                            masks = result.masks.data.cpu().numpy()  # Masks as numpy arrays
+                            orig_img = result.orig_img  # Original image
 
+                            # Convert the original image to RGB (if it's in BGR format)
+                            if len(orig_img.shape) == 3 and orig_img.shape[2] == 3:
+                                image_rgb = cv2.cvtColor(orig_img, cv2.COLOR_BGR2RGB)
+                            else:
+                                image_rgb = orig_img
+
+                            # Create an overlay for the segmentation masks
+                            overlay = image_rgb.copy()
+
+                            # Apply the masks to the overlay
+                            for mask in masks:
+                                mask_resized = cv2.resize(mask, (
+                                    orig_img.shape[1], orig_img.shape[0]))  # Resize mask to match image dimensions
+                                overlay[mask_resized > 0.5] = (
+                                255, 0, 0)  # Apply a color to the mask area (red in this case)
+
+                            # Blend the original image with the overlay
+                            alpha = 0.5  # Transparency factor
+                            annotated_image = cv2.addWeighted(overlay, alpha, image_rgb, 1 - alpha, 0)
                         # Display the image with annotations
-                        org_frame.image(frame, channels="BGR")
-                        ann_frame.image(annotated_image, channels="BGR")
+                    org_frame.image(frame, channels="BGR")
+                    ann_frame.image(annotated_image, channels="BGR")
 
                     if stop_button:
                         videocapture.release()  # Release the capture
@@ -124,7 +162,9 @@ if st.sidebar.button("Start"):
                 videocapture.release()
 
     if source == "image":
-        results = model(img_file_name, conf=conf_thres, iou=nms_thres)
+        if model == 'YOLOv8 s':
+            yolo = YOLO("best s.pt")
+        results = yolo(img_file_name, conf=conf_thres, iou=nms_thres)
 
         if bbox == "Yes":
 
@@ -141,6 +181,7 @@ if st.sidebar.button("Start"):
         else:
             for result in results:
                 # Extract masks and the original image
+
                 masks = result.masks.data.cpu().numpy()  # Masks as numpy arrays
                 orig_img = result.orig_img  # Original image
 
@@ -166,4 +207,3 @@ if st.sidebar.button("Start"):
                 # Display the image with only segmentation masks
                 org_frame.image(img_file, channels="BGR")
                 ann_frame.image(segmented_image, channels="BGR")
-
